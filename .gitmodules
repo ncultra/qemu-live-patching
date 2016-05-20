@@ -31,3 +31,9 @@
 [submodule "roms/u-boot"]
 	path = roms/u-boot
 	url = git://git.qemu-project.org/u-boot.git
+[submodule "sandbox"]
+	path = sandbox
+	url = git@github.rackspace.com:mike9349/sandbox.git
+[submodule "SLOF"]
+	path = SLOF
+	url = git://git.qemu-project.org/SLOF.git
