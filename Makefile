@@ -300,9 +300,12 @@ $(qapi-modules) $(SRC_PATH)/scripts/qapi-introspect.py $(qapi-py)
 	$(call quiet-command,$(PYTHON) $(SRC_PATH)/scripts/qapi-introspect.py \
 		$(gen-out-type) -o "." $<, \
 		"  GEN   $@")
-
 QGALIB_GEN=$(addprefix qga/qapi-generated/, qga-qapi-types.h qga-qapi-visit.h qga-qmp-commands.h)
 $(qga-obj-y) qemu-ga.o: $(QGALIB_GEN)
+
+sandbox/libsandbox.o:
+	$(shell cd sandbox && make static)
+
 
 qemu-ga$(EXESUF): $(qga-obj-y) libqemuutil.a libqemustub.a
 	$(call LINK, $^)
