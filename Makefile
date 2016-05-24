@@ -303,9 +303,11 @@ $(qapi-modules) $(SRC_PATH)/scripts/qapi-introspect.py $(qapi-py)
 QGALIB_GEN=$(addprefix qga/qapi-generated/, qga-qapi-types.h qga-qapi-visit.h qga-qmp-commands.h)
 $(qga-obj-y) qemu-ga.o: $(QGALIB_GEN)
 
-sandbox/libsandbox.o:
-	$(shell cd sandbox && make static)
+sandbox-listen.o:
+	$(shell cd $(BUILD_DIR)/sandbox && make $@ && cp $@ $(BUILD_DIR)/)
 
+libsandbox.o:
+	$(shell cd $(BUILD_DIR)/sandbox && make $@ &&  cp $@ $(BUILD_DIR)/)
 
 qemu-ga$(EXESUF): $(qga-obj-y) libqemuutil.a libqemustub.a
 	$(call LINK, $^)

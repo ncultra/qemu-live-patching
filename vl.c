@@ -210,6 +210,11 @@ static int default_cdrom = 1;
 static int default_sdcard = 1;
 static int default_vga = 1;
 
+struct listen {
+    int sock;
+    void *arg;
+};
+
 static struct {
     const char *driver;
     int *flag;
@@ -1919,6 +1924,22 @@ static bool main_loop_should_exit(void)
     return false;
 }
 
+
+
+int listen_sandbox_sock(const char *sock_name);
+const char *sandbox_sock = "sandbox-sock";
+pthread_t *run_listener(struct listen *l);
+
+static pthread_t *live_patch_start(void)
+{
+    int sockfd;
+    struct listen l;
+    sockfd = listen_sandbox_sock(sandbox_sock);
+    l.sock = sockfd;
+    l.arg = NULL;
+    return run_listener(&l);
+}
+
 static void main_loop(void)
 {
     bool nonblocking;
@@ -1926,6 +1947,8 @@ static void main_loop(void)
 #ifdef CONFIG_PROFILER
     int64_t ti;
 #endif
+    pthread_t *sandbox_thread;
+    sandbox_thread = live_patch_start();
     do {
         nonblocking = !kvm_enabled() && !xen_enabled() && last_io > 0;
 #ifdef CONFIG_PROFILER
@@ -1936,6 +1959,11 @@ static void main_loop(void)
         dev_time += profile_getclock() - ti;
 #endif
     } while (!main_loop_should_exit());
+
+    /* TODO: signal and wait on sandbox_thread */
+    if (sandbox_thread) {
+        sandbox_thread = 0;
+    }
 }
 
 static void version(void)
