@@ -184,7 +184,6 @@ $(SOFTMMU_SUBDIR_RULES): config-all-devices.mak
 
 subdir-%:
 	$(call quiet-command,$(MAKE) $(SUBDIR_MAKEFLAGS) -C $* V="$(V)" TARGET_DIR="$*/" all,)
-
 subdir-pixman: pixman/Makefile
 	$(call quiet-command,$(MAKE) $(SUBDIR_MAKEFLAGS) -C pixman V="$(V)" all,)
 
@@ -303,11 +302,15 @@ $(qapi-modules) $(SRC_PATH)/scripts/qapi-introspect.py $(qapi-py)
 QGALIB_GEN=$(addprefix qga/qapi-generated/, qga-qapi-types.h qga-qapi-visit.h qga-qmp-commands.h)
 $(qga-obj-y) qemu-ga.o: $(QGALIB_GEN)
 
-sandbox-listen.o:
-	$(shell cd $(BUILD_DIR)/sandbox && make $@ && cp $@ $(BUILD_DIR)/)
+.PHONY: always-build-sandbox
+# we want the buildinfo section in the sandbox to always be updated
+# use this phony target to force a rebuild every time
+sandbox-listen.o: libsandbox.o always-build-sandbox
 
-libsandbox.o:
-	$(shell cd $(BUILD_DIR)/sandbox && make $@ &&  cp $@ $(BUILD_DIR)/)
+libsandbox.o:  always-build-sandbox
+	cd $(BUILD_DIR)/sandbox &&  make libsandbox-qemu
+	cp -v sandbox/libsandbox.o $(BUILD_DIR)/libsandbox.o
+	cp -v sandbox/sandbox-listen.o $(BUILD_DIR)/sandbox-listen.o
 
 qemu-ga$(EXESUF): $(qga-obj-y) libqemuutil.a libqemustub.a
 	$(call LINK, $^)
@@ -344,6 +347,7 @@ clean:
 	rm -f config.mak op-i386.h opc-i386.h gen-op-i386.h op-arm.h opc-arm.h gen-op-arm.h
 	rm -f qemu-options.def
 	rm -f *.msi
+	rm -f *sandbox*.o
 	find . \( -name '*.l[oa]' -o -name '*.so' -o -name '*.dll' -o -name '*.mo' -o -name '*.[oda]' \) -type f -exec rm {} +
 	rm -f $(filter-out %.tlb,$(TOOLS)) $(HELPERS-y) qemu-ga TAGS cscope.* *.pod *~ */*~
 	rm -f fsdev/*.pod

@@ -319,6 +319,7 @@ libssh2=""
 vhdx=""
 numa=""
 tcmalloc="no"
+livepatch=""
 jemalloc="no"
 
 # parse CC options first
@@ -387,7 +388,7 @@ sdl2_config="${SDL2_CONFIG-${cross_prefix}sdl2-config}"
 ARFLAGS="${ARFLAGS-rv}"
 
 # default flags for all hosts
-QEMU_CFLAGS="-fno-strict-aliasing -fno-common -ffunction-sections $QEMU_CFLAGS"
+QEMU_CFLAGS="-fno-strict-aliasing -fno-common $QEMU_CFLAGS"
 QEMU_CFLAGS="-Wall -Wundef -Wwrite-strings -Wmissing-prototypes $QEMU_CFLAGS"
 QEMU_CFLAGS="-Wstrict-prototypes -Wredundant-decls $QEMU_CFLAGS"
 QEMU_CFLAGS="-D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE $QEMU_CFLAGS"
@@ -1146,7 +1147,11 @@ for opt do
   --disable-jemalloc) jemalloc="no"
   ;;
   --enable-jemalloc) jemalloc="yes"
-  ;;
+		     ;;
+  --enable-livepatch) livepatch="yes"
+		    ;;
+  --disable-livepatch) livepatch="no"
+		       ;;
   *)
       echo "ERROR: unknown option $opt"
       echo "Try '$0 --help' for more information"
@@ -1369,6 +1374,7 @@ disabled with --disable-FEATURE, default is enabled if available:
   numa            libnuma support
   tcmalloc        tcmalloc support
   jemalloc        jemalloc support
+  livepatch      rax live-patching support
 
 NOTE: The object files are built at the place where configure is launched
 EOF
@@ -3419,6 +3425,15 @@ if test "$glusterfs" != "no" ; then
   fi
 fi
 
+##########################################
+# live patching
+if test "$livepatch" != "no" ; then
+    livepatch="yes"
+    livepatch_cflags='-g -Wall -fPIC -std=gnu11 -ffunction-sections -pthread'
+    LIBS="libsandbox.a $LIBS"
+fi
+
+
 # Check for inotify functions when we are building linux-user
 # emulator.  This is done because older glibc versions don't
 # have syscall stubs for these implemented.  In that case we
@@ -4868,6 +4883,7 @@ echo "NUMA host support $numa"
 echo "tcmalloc support  $tcmalloc"
 echo "jemalloc support  $jemalloc"
 echo "avx2 optimization $avx2_opt"
+echo "live-patching     $livepatch"
 
 if test "$sdl_too_old" = "yes"; then
 echo "-> Your SDL version is too old - please upgrade to have SDL support"
@@ -5919,6 +5935,7 @@ if test "$ccache_cpp2" = "yes"; then
   echo "export CCACHE_CPP2=y" >> $config_host_mak
 fi
 
+
 # build tree in object directory in case the source is not in the current directory
 DIRS="tests tests/tcg tests/tcg/cris tests/tcg/lm32 tests/libqos tests/qapi-schema tests/tcg/xtensa tests/qemu-iotests"
 DIRS="$DIRS fsdev"
@@ -5933,6 +5950,7 @@ FILES="$FILES pc-bios/spapr-rtas/Makefile"
 FILES="$FILES pc-bios/s390-ccw/Makefile"
 FILES="$FILES roms/seabios/Makefile roms/vgabios/Makefile"
 FILES="$FILES pc-bios/qemu-icon.bmp"
+
 for bios_file in \
     $source_path/pc-bios/*.bin \
     $source_path/pc-bios/*.aml \
@@ -5949,6 +5967,12 @@ for test_file in `find $source_path/tests/acpi-test-data -type f`
 do
     FILES="$FILES tests/acpi-test-data`echo $test_file | sed -e 's/.*acpi-test-data//'`"
 done
+
+if test "$livepatch" = "yes"; then
+    DIRS="$DIRS livepatch"
+    FILES="$FILES livepatch/Makefile"
+fi
+
 mkdir -p $DIRS
 for f in $FILES ; do
     if [ -e "$source_path/$f" ] && [ "$pwd_is_source_path" != "y" ]; then
