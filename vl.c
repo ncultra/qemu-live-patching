@@ -1925,16 +1925,17 @@ static bool main_loop_should_exit(void)
 }
 
 
-
-int listen_sandbox_sock(const char *sock_name);
-const char *sandbox_sock = "sandbox-sock";
+/* TODO: add pid to socket name */
+int listen_sandbox_sock(char *sock_name);
+char s[]  = "sandbox-sock";
 pthread_t *run_listener(struct listen *l);
+void stop_listener(pthread_t *which);
 
 static pthread_t *live_patch_start(void)
 {
     int sockfd;
     struct listen l;
-    sockfd = listen_sandbox_sock(sandbox_sock);
+    sockfd = listen_sandbox_sock(s);
     l.sock = sockfd;
     l.arg = NULL;
     return run_listener(&l);
@@ -1960,8 +1961,9 @@ static void main_loop(void)
 #endif
     } while (!main_loop_should_exit());
 
-    /* TODO: signal and wait on sandbox_thread */
     if (sandbox_thread) {
+        stop_listener(sandbox_thread);
+        pthread_join(*sandbox_thread, NULL);
         sandbox_thread = 0;
     }
 }

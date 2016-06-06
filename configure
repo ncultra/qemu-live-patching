@@ -3430,7 +3430,6 @@ fi
 if test "$livepatch" != "no" ; then
     livepatch="yes"
     livepatch_cflags='-g -Wall -fPIC -std=gnu11 -ffunction-sections -pthread'
-    LIBS="libsandbox.a $LIBS"
 fi
 
 
