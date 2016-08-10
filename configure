@@ -319,7 +319,7 @@ libssh2=""
 vhdx=""
 numa=""
 tcmalloc="no"
-livepatch=""
+livepatch="yes"
 jemalloc="no"
 
 # parse CC options first
@@ -1374,7 +1374,7 @@ disabled with --disable-FEATURE, default is enabled if available:
   numa            libnuma support
   tcmalloc        tcmalloc support
   jemalloc        jemalloc support
-  livepatch      rax live-patching support
+  livepatch       rax live-patching support
 
 NOTE: The object files are built at the place where configure is launched
 EOF
