@@ -1933,9 +1933,13 @@ void stop_listener(pthread_t *which);
 
 static pthread_t *live_patch_start(void)
 {
+    char sockname[20];
+    snprintf(sockname, 19, "%s-%d", sock_name, getpid());
+    
     int sockfd;
     struct listen l;
-    sockfd = listen_sandbox_sock(s);
+
+    sockfd = listen_sandbox_sock(sockname);
     l.sock = sockfd;
     l.arg = NULL;
     return run_listener(&l);
