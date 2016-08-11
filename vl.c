@@ -1934,7 +1934,7 @@ void stop_listener(pthread_t *which);
 static pthread_t *live_patch_start(void)
 {
     char sockname[20];
-    snprintf(sockname, 19, "%s-%d", sock_name, getpid());
+    snprintf(sockname, 19, "%s-%d", s, getpid());
     
     int sockfd;
     struct listen l;
