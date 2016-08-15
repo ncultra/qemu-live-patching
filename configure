@@ -3429,7 +3429,8 @@ fi
 # live patching
 if test "$livepatch" != "no" ; then
     livepatch="yes"
-    livepatch_cflags='-g -Wall -fPIC -std=gnu11 -ffunction-sections -pthread'
+    livepatch_cflags='-g -Wall -fPIC -std=gnu11 -ffunction-sections -fdata-sections -pthread'
+    QEMU_CFLAGS="$QEMU_CFLAGS $livepatch_cflags"
 fi
 
 
