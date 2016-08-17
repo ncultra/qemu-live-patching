@@ -1925,23 +1925,28 @@ static bool main_loop_should_exit(void)
 }
 
 
+
 /* TODO: add pid to socket name */
 int listen_sandbox_sock(char *sock_name);
-char s[]  = "sandbox-sock";
+char s[]  = "sandbox-sock\0";
 pthread_t *run_listener(struct listen *l);
 void stop_listener(pthread_t *which);
+pthread_t *live_patch_start(void);
 
-static pthread_t *live_patch_start(void)
+pthread_t *live_patch_start(void)
 {
-    char sockname[20];
-    snprintf(sockname, 19, "%s-%d", s, getpid());
-    
-    int sockfd;
-    struct listen l;
+    char remove_me[1024];
 
-    sockfd = listen_sandbox_sock(sockname);
+    snprintf(remove_me, 1024, "%s-%d", s, 4444);
+
+    int sockfd;
+static struct listen l;
+
+    sockfd = listen_sandbox_sock(s);
     l.sock = sockfd;
     l.arg = NULL;
+    printf("server listen sock: %u\n", l.sock);
+
     return run_listener(&l);
 }
 
