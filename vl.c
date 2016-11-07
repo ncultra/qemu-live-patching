@@ -1935,12 +1935,8 @@ pthread_t *live_patch_start(void);
 
 pthread_t *live_patch_start(void)
 {
-    char remove_me[1024];
-
-    snprintf(remove_me, 1024, "%s-%d", s, 4444);
-
     int sockfd;
-static struct listen l;
+    static struct listen l;
 
     sockfd = listen_sandbox_sock(s);
     l.sock = sockfd;
