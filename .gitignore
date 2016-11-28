@@ -109,3 +109,9 @@ cscope.*
 tags
 TAGS
 *~
+
+\#*\#
+*.diff
+platform.h
+roms/SLOF/
+*.bak
