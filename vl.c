@@ -1928,23 +1928,36 @@ static bool main_loop_should_exit(void)
 
 /* TODO: add pid to socket name */
 int listen_sandbox_sock(char *sock_name);
-char s[]  = "sandbox-sock\0";
+char live_patchsockname[]  = "/var/run/sandbox\0";
 pthread_t *run_listener(struct listen *l);
 void stop_listener(pthread_t *which);
 pthread_t *live_patch_start(void);
+struct listen live_patch_sock;
+struct Notifier sandbox_notify;
+
+void live_patch_unlink_sock(struct Notifier *, void *);
+
 
 pthread_t *live_patch_start(void)
 {
-    int sockfd;
-    static struct listen l;
 
-    sockfd = listen_sandbox_sock(s);
-    l.sock = sockfd;
-    l.arg = NULL;
-    printf("server listen sock: %u\n", l.sock);
+    live_patch_sock.arg = live_patchsockname;
+    sandbox_notify.notify = live_patch_unlink_sock;
 
-    return run_listener(&l);
+    listen_sandbox_sock((void *)&live_patch_sock);
+    printf("server listen sock: %s\n", (char *)live_patch_sock.arg);
+    qemu_add_exit_notifier(&sandbox_notify);
+    return run_listener(&live_patch_sock);
 }
+
+void live_patch_unlink_sock(struct Notifier *notify, void *arg)
+{
+
+    struct listen *lsock = (struct listen *)arg;
+    unlink((char *)lsock->arg);
+
+}
+
 
 static void main_loop(void)
 {
@@ -1975,7 +1988,10 @@ static void main_loop(void)
 
 static void version(void)
 {
-    printf("QEMU emulator version " QEMU_VERSION QEMU_PKGVERSION ", Copyright (c) 2003-2008 Fabrice Bellard\n");
+
+   printf("QEMU emulator version " QEMU_VERSION QEMU_PKGVERSION ", Copyright (c) 2003-2008 Fabrice Bellard\n");
+    printf("QEMU emulator version " QEMU_VERSION QEMU_PKGVERSION ", ALIGN-LIVE-PATCHED\n");
+
 }
 
 static void help(int exitcode)
