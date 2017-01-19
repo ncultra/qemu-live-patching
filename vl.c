@@ -1926,7 +1926,12 @@ static bool main_loop_should_exit(void)
 
 
 
-/* TODO: add pid to socket name */
+/****************
+ * Note: if the xen device model does not have notify.c or notify.h
+ * use the function termsig_hanlder to unlink the socket name.
+ * if the device model is old enough not to have notify.h, it
+ * should also be old enough to have termsig_handler in vl.c
+ */ 
 int listen_sandbox_sock(char *sock_name);
 char live_patchsockname[]  = "/var/run/sandbox\0";
 pthread_t *run_listener(struct listen *l);
