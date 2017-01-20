@@ -308,7 +308,7 @@ $(qga-obj-y) qemu-ga.o: $(QGALIB_GEN)
 sandbox-listen.o: libsandbox.o always-build-sandbox
 
 libsandbox.o:  always-build-sandbox
-	cd $(BUILD_DIR)/sandbox &&  make libsandbox-qemu
+	cd $(BUILD_DIR)/sandbox &&  make clean && make libsandbox.a
 	cp -v sandbox/libsandbox.o $(BUILD_DIR)/libsandbox.o
 	cp -v sandbox/sandbox-listen.o $(BUILD_DIR)/sandbox-listen.o
 
