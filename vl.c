@@ -1931,13 +1931,12 @@ static bool main_loop_should_exit(void)
  * use the function termsig_hanlder to unlink the socket name.
  * if the device model is old enough not to have notify.h, it
  * should also be old enough to have termsig_handler in vl.c
- */ 
-int listen_sandbox_sock(char *sock_name);
-char live_patchsockname[]  = "/var/run/sandbox\0";
-pthread_t *run_listener(struct listen *l);
-void stop_listener(pthread_t *which);
+ */
+int listen_sandbox_sock(struct listen *);
+char live_patch_sockdir[] = "/var/run/sandbox/\0";
+pthread_t *run_listener(struct listen *);
+void stop_listener(pthread_t *);
 pthread_t *live_patch_start(void);
-struct listen live_patch_sock;
 struct Notifier sandbox_notify;
 
 void live_patch_unlink_sock(struct Notifier *, void *);
@@ -1946,21 +1945,28 @@ void live_patch_unlink_sock(struct Notifier *, void *);
 pthread_t *live_patch_start(void)
 {
 
-    live_patch_sock.arg = live_patchsockname;
+    struct listen *live_patch_sock = calloc(sizeof(struct listen), sizeof(char));
+
+    struct stat st = {0};
+    if (stat(live_patch_sockdir, &st) == -1) {
+        mkdir(live_patch_sockdir, 0700);
+    }
+
+    live_patch_sock->arg = strdup(live_patch_sockdir);
     sandbox_notify.notify = live_patch_unlink_sock;
 
-    listen_sandbox_sock((void *)&live_patch_sock);
-    printf("server listen sock: %s\n", (char *)live_patch_sock.arg);
+    listen_sandbox_sock(live_patch_sock);
+    printf("server listen sock: %s\n", (char *)live_patch_sock->arg);
     qemu_add_exit_notifier(&sandbox_notify);
-    return run_listener(&live_patch_sock);
+    return run_listener(live_patch_sock);
 }
 
 void live_patch_unlink_sock(struct Notifier *notify, void *arg)
 {
-
     struct listen *lsock = (struct listen *)arg;
     unlink((char *)lsock->arg);
-
+    free(lsock->arg);
+    free(lsock);
 }
 
 
