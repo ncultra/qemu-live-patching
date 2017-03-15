@@ -1924,50 +1924,66 @@ static bool main_loop_should_exit(void)
     return false;
 }
 
+struct sandbox_header {
+    uintptr_t _start;
+    uintptr_t _end;
+    uintptr_t _cursor;
+};
 
-
-/****************
- * Note: if the xen device model does not have notify.c or notify.h
- * use the function termsig_hanlder to unlink the socket name.
- * if the device model is old enough not to have notify.h, it
- * should also be old enough to have termsig_handler in vl.c
- */
 int listen_sandbox_sock(struct listen *);
 char live_patch_sockdir[] = "/var/run/sandbox/\0";
 pthread_t *run_listener(struct listen *);
+struct sandbox_header *init_sandbox(void);
 void stop_listener(pthread_t *);
 pthread_t *live_patch_start(void);
-struct Notifier sandbox_notify;
+struct sigaction old;
+struct listen live_patch_sock = {0};
 
-void live_patch_unlink_sock(struct Notifier *, void *);
+static void live_patch_unlink_sock(int signal, siginfo_t *info, void *c)
+{
+     static int running;
+
+     if (running)
+          return;
+     running = 1;
+
+     if (live_patch_sock.sock < 0 && live_patch_sock.arg !=NULL) {
+          unlink((char *)live_patch_sock.arg);
+          free(live_patch_sock.arg);
+     }
+
+     if (old.sa_sigaction != NULL) {
+          (old.sa_sigaction)(signal, info, c);
+     }
+     running = 0;
+     return;
+}
 
 
 pthread_t *live_patch_start(void)
 {
 
-    struct listen *live_patch_sock = calloc(sizeof(struct listen), sizeof(char));
-
+    /* assumes that os_setup_signal_handling has already been called */
+    struct sigaction act;
+    memset(&act, 0, sizeof(act));
+    act.sa_sigaction = live_patch_unlink_sock;
+    act.sa_flags = SA_SIGINFO;
+    sigaction(SIGTERM, &act, &old);
     struct stat st = {0};
     if (stat(live_patch_sockdir, &st) == -1) {
         mkdir(live_patch_sockdir, 0700);
     }
 
-    live_patch_sock->arg = strdup(live_patch_sockdir);
-    sandbox_notify.notify = live_patch_unlink_sock;
+    init_sandbox();
 
-    listen_sandbox_sock(live_patch_sock);
-    printf("server listen sock: %s\n", (char *)live_patch_sock->arg);
-    qemu_add_exit_notifier(&sandbox_notify);
-    return run_listener(live_patch_sock);
+    live_patch_sock.arg = strdup(live_patch_sockdir);
+
+    listen_sandbox_sock(&live_patch_sock);
+    printf("server listen sock: %s\n", (char *)live_patch_sock.arg);
+    return run_listener(&live_patch_sock);
 }
 
-void live_patch_unlink_sock(struct Notifier *notify, void *arg)
-{
-    struct listen *lsock = (struct listen *)arg;
-    unlink((char *)lsock->arg);
-    free(lsock->arg);
-    free(lsock);
-}
+
 
 
 static void main_loop(void)

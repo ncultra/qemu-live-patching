@@ -65,10 +65,13 @@ void hmp_info_version(Monitor *mon, const QDict *qdict)
 
     info = qmp_query_version(NULL);
 
+    
     monitor_printf(mon, "%" PRId64 ".%" PRId64 ".%" PRId64 "%s\n",
                    info->qemu->major, info->qemu->minor, info->qemu->micro,
                    info->package);
-
+    
+    monitor_printf(mon, "the quick brown fox jumped over the lazy dog\n");
+    
     qapi_free_VersionInfo(info);
 }
 
