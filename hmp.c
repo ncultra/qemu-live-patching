@@ -35,7 +35,7 @@
 #include "block/qapi.h"
 #include "qemu-io.h"
 #include "qemu/cutils.h"
-
+#include <assert.h>
 #ifdef CONFIG_SPICE
 #include <spice/enums.h>
 #endif
@@ -65,13 +65,13 @@ void hmp_info_version(Monitor *mon, const QDict *qdict)
 
     info = qmp_query_version(NULL);
 
-    
+
     monitor_printf(mon, "%" PRId64 ".%" PRId64 ".%" PRId64 "%s\n",
                    info->qemu->major, info->qemu->minor, info->qemu->micro,
                    info->package);
-    
-    monitor_printf(mon, "the quick brown fox jumped over the lazy dog\n");
-    
+
+    monitor_printf(mon, "THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG\n");
+
     qapi_free_VersionInfo(info);
 }
 

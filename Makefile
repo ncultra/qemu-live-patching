@@ -303,14 +303,20 @@ QGALIB_GEN=$(addprefix qga/qapi-generated/, qga-qapi-types.h qga-qapi-visit.h qg
 $(qga-obj-y) qemu-ga.o: $(QGALIB_GEN)
 
 .PHONY: always-build-sandbox
+
 # we want the buildinfo section in the sandbox to always be updated
 # use this phony target to force a rebuild every time
+# this regime is inefficient but works.
+
 sandbox-listen.o: libsandbox.o always-build-sandbox
 
+pmparser.o: libsandbox.o always-build-sandbox
+
 libsandbox.o:  always-build-sandbox
-	cd $(BUILD_DIR)/sandbox &&  make clean && make libsandbox.a
+	cd $(BUILD_DIR)/sandbox &&  make clean && make static
 	cp -v sandbox/libsandbox.o $(BUILD_DIR)/libsandbox.o
 	cp -v sandbox/sandbox-listen.o $(BUILD_DIR)/sandbox-listen.o
+	cp -v sandbox/pmparser.o $(BUILD_DIR)/pmparser.o
 
 qemu-ga$(EXESUF): $(qga-obj-y) libqemuutil.a libqemustub.a
 	$(call LINK, $^)
